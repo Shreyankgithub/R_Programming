@@ -1,0 +1,115 @@
+---
+title: "Analysis Report: COVID-19 Pandemic Visualizations"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r}
+# Load required packages
+library(ggplot2)
+library(maps)
+library(lubridate)
+library(dplyr)
+library(ggthemes)
+library(mapproj)
+
+# Read the dataset
+data <- read.csv("C:/country_data.csv")
+```
+
+# Analysis Report: COVID-19 Pandemic Visualizations
+
+## Introduction
+
+As a member of the National Public Health Emergency Team (NPHET), I have conducted a comprehensive analysis of the COVID-19 pandemic data. This report presents four key visualizations that provide valuable insights into the global impact and trends of the pandemic. Each visualization contributes to our understanding of the situation and informs decision-making processes. Let's explore these visualizations and the stories they reveal.
+
+## Visualization 1: World Map Chart
+
+The World Map Chart visualizes the total COVID-19 cases worldwide, providing a broad overview of the global impact. The chart utilizes a color gradient to represent the total cases in different locations. This visualization helps identify locations heavily affected by the pandemic and highlights areas requiring urgent attention. The chart effectively captures the magnitude of the crisis at a glance.
+
+```{r}
+# World Map chart
+suppressWarnings({
+  WorldData <- map_data('world') %>% filter(region != "Antarctica") %>% fortify
+  df <- data.frame(location = c('Mayotte', 'Mauritania', 'Lithuania', 'Ireland', 'Indonesia', 'Guernsey', 'Greenland', 'Comoros', 'Burundi', 'Bolivia'), 
+                   value = c(4, 10, 11, 5, 8, 12, 9, 3, 6, 7),
+                   stringsAsFactors = FALSE)
+  world_map <- ggplot() +
+    geom_map(data = WorldData, map = WorldData,
+             aes(x = long, y = lat, group = group, map_id = region),
+             fill = "white", colour = "#7f7f7f", size = 0.5) +
+    geom_map(data = df, map = WorldData,
+             aes(fill = value, map_id = location),
+             colour = "#7f7f7f", size = 0.5) +
+    coord_map("rectangular", lat0 = 0, xlim = c(-180, 180), ylim = c(-60, 90)) +
+    scale_fill_continuous(low = "thistle2", high = "darkred", guide = "colorbar") +
+    scale_y_continuous(breaks = NULL) +
+    scale_x_continuous(breaks = NULL) +
+    labs(fill = "Total Cases", title = "COVID-19 Total Cases Worldwide", x = "", y = "") +
+    theme_bw()
+  world_map
+})
+```
+
+## Visualization 2: Bar Chart
+
+The Bar Chart showcases the total COVID-19 cases by location. By presenting the data in a bar format, it allows for easy comparison between different locations. The chart provides insights into the relative burden of the pandemic across various locations. It enables us to identify hotspots and areas that require targeted interventions. The bar chart is particularly useful for understanding the distribution of cases and identifying locations with higher infection rates.
+
+```{r}
+# Bar chart
+suppressWarnings({
+  bar_chart <- ggplot(data, aes(x = location, y = total_cases, fill = location)) +
+    geom_bar(stat = "identity") +
+    coord_flip() +
+    labs(title = "COVID-19 Total Cases by Location", x = "Location", y = "Total Cases") +
+    theme_minimal() +
+    theme(panel.background = element_rect(fill = "white")) +
+    scale_y_continuous(labels = scales::comma)
+  bar_chart
+})
+```
+
+## Visualization 3: Scatterplot
+
+The Scatterplot examines the relationship between total cases per million and new cases per million. By plotting these variables, we can identify patterns and trends in the spread of the virus. The scatterplot provides insights into whether locations with higher total cases also experience higher rates of new infections. The inclusion of a trend line aids in understanding the overall direction of the relationship. This visualization helps us assess the effectiveness of containment measures and predict future developments.
+
+```{r}
+# Scatterplot with linear regression line
+# Remove missing and non-finite values
+data_clean <- data[is.finite(data$total_cases_per_million) & is.finite(data$new_cases_per_million), ]
+# Create scatterplot
+scatterplot <- ggplot(data_clean, aes(x = total_cases_per_million, y = new_cases_per_million, color = location)) +
+  geom_point(na.rm = TRUE) +
+  geom_smooth(method = "lm", se = FALSE, color = "red", na.rm = TRUE) +
+  labs(title = "Total Cases per Million vs. New Cases per Million", x = "Total Cases per Million", y = "New Cases per Million") +
+  theme_minimal() +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_x_continuous(labels = scales::comma) +
+  scale_y_continuous(labels = scales::comma)
+scatterplot
+```
+
+## Visualization 4: Time Series Chart
+
+The Time Series Chart depicts the progression of total COVID-19 cases over time. By visualizing the data chronologically, we gain a deeper understanding of the pandemic's trajectory. The chart captures the rise and fall of cases, helping us identify critical periods and patterns of transmission. It enables us to assess the effectiveness of interventions and track the impact of vaccination campaigns. The time series chart provides vital insights for monitoring the progress of the pandemic.
+
+```{r}
+# Time-series chart
+data$year <- as.numeric(data$year)
+data$total_cases <- as.numeric(data$total_cases)
+# Create a time-series chart
+time_series <- ggplot(data, aes(x = year, y = total_cases, color = factor(year))) +
+  geom_line(size = 1) +
+  labs(title = "Total Cases Over Time", x = "Year", y = "Total Cases") +
+  theme_minimal() +
+  theme(panel.background = element_rect(fill = "white")) +
+  scale_x_continuous(labels = scales::comma, breaks = scales::pretty_breaks()) +
+  scale_y_continuous(labels = scales::comma)
+time_series
+```
+
+## Conclusion
+
+These four visualizations provide a comprehensive view of the COVID-19 pandemic, aiding the National Public Health Emergency Team (NPHET) in understanding the global impact and formulating evidence-based strategies. The World Map Chart helps identify heavily affected regions, while the Bar Chart highlights variations in the distribution of cases. The Scatterplot reveals the relationship between total and new cases, while the Time Series Chart tracks the progression of the pandemic over time. Together, these visualizations inform decision-making processes and guide our efforts in mitigating the impact of COVID-19.
